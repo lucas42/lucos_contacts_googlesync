@@ -179,7 +179,7 @@ loop {
 								http = Net::HTTP.new(uri.host, uri.port)
 								resp = http.post(uri.request_uri, postdata, {'Authorization' => "Key "+settings['contactskey']})
 								if resp.code != "204"
-									raise "Accounts HTTP Request failed with "+resp.code
+									raise "Accounts HTTP Request failed with "+resp.code+"\n"+resp.body
 								end
 							}
 						when "export"
