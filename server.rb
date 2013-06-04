@@ -15,12 +15,20 @@ $stdout.sync = true
 $stderr.sync = true
 Thread.abort_on_exception = true
 
+port = ARGV[0]
+servicesdomain = ARGV[1]
+
 settings = Hash[*File.read('settings').split(/\s+/)]
+
+
+uri = URI.parse('http://'+servicesdomain+'/api/hosts')
+response = Net::HTTP.get_response(uri)
+hosts = JSON.parse(response.body)
 
 Resource.new('lucosjs', 'js', '../core/lucos.js')
 
-server = TCPServer.open(8011)
-puts 'server running on port 8011'	
+server = TCPServer.open(port)
+puts 'server running on port '+port
 loop {
 	Thread.start(server.accept) do |client|
 		header = nil
@@ -63,7 +71,7 @@ loop {
 					if token.nil? or token == ''
 						raise "Auth Failure"
 					end
-					uri = URI.parse('http://auth.l42.eu/data?token='+URI.escape(token)+'&apikey='+settings['authkey'])
+					uri = URI.parse('http://'+hosts['auth']+'/data?token='+URI.escape(token)+'&apikey='+settings['authkey'])
 					#uri.query = URI.encode_www_form("token" => uri_params['token'], "apikey" => 'abc') #not suported until ruby 1.9
 					response = Net::HTTP.get_response(uri)
 					if (response.code == "401")
@@ -126,7 +134,7 @@ loop {
 								}
 								userid = nil
 								identifiers.each() { |identifier|
-									uri = URI.parse("http://contacts.l42.eu/identify")
+									uri = URI.parse("http://"+hosts['contacts']+"/identify")
 									#uri.query = URI.encode_www_form(identifier) #not suported until ruby 1.9
 									uri.query = ""
 									identifier.each_pair do |key, val|
@@ -146,7 +154,7 @@ loop {
 								# If no userid is found, then add a new user
 								if userid.nil?
 									client.puts("Creating new user "+contactData.elements['title'].text+" (Google id:"+identifiers.first[:id]+")")
-									uri = URI.parse("http://contacts.l42.eu/agents/add")
+									uri = URI.parse("http://"+hosts['contacts']+"/agents/add")
 
 									http = Net::HTTP.new(uri.host, uri.port)
 									resp = http.post(uri.request_uri, URI.escape("name_en")+"="+URI.escape(contactData.elements['title'].text), {'Authorization' => "Key "+settings['contactskey']})
@@ -164,9 +172,9 @@ loop {
 										postdata += URI.escape(key.id2name)+"="+URI.escape(val.to_s)+"&"
 									end
 								}
-								uri = URI.parse("http://contacts.l42.eu/agents/"+userid+"/accounts")
+								uri = URI.parse("http://"+hosts['contacts']+"/agents/"+userid+"/accounts")
 
-								client.puts("http://contacts.l42.eu/agents/"+userid+"/accounts")
+								client.puts("http://"+hosts['contacts']+"/agents/"+userid+"/accounts")
 								client.puts(postdata)
 								http = Net::HTTP.new(uri.host, uri.port)
 								resp = http.post(uri.request_uri, postdata, {'Authorization' => "Key "+settings['contactskey']})
@@ -187,9 +195,9 @@ loop {
 			end
 		rescue Exception => e
 			if e.message == "Auth Failure"
-				url = "http://googlecontactssync.l42.eu"+uristr
+				url = "http://"+hosts['googlecontactsync']+uristr
 				client.puts("HTTP/1.1 302 Found")
-				client.puts("Location: http://auth.l42.eu/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
+				client.puts("Location: http://"+hosts['auth']+"/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
 				client.puts("")
 			elsif e.message.end_with?("Not Found")
 					client.puts("HTTP/1.1 404 "+e.message)
