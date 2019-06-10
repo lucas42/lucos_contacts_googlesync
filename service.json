@@ -1,9 +1,0 @@
-{
-	"port": 8011,
-	"name": "Contacts - Google Sync",
-	"commands": {
-		"main": './server.rb %p %d'
-	},
-	"subdomain": "googlecontactssync",
-	"disablecaching": true
-}
