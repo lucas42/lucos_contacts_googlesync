@@ -1,4 +1,4 @@
-#!/usr/bin/ruby -rubygems
+#!/usr/bin/ruby
 
 require 'net/http'
 require 'net/https'
@@ -9,23 +9,15 @@ require 'json'
 include REXML
 
 
-require '../core/resources.rb'
-
 $stdout.sync = true
 $stderr.sync = true
 Thread.abort_on_exception = true
 
 port = ARGV[0]
-servicesdomain = ARGV[1]
 
 settings = Hash[*File.read('settings').split(/\s+/)]
 
-
-uri = URI.parse('http://'+servicesdomain+'/api/hosts')
-response = Net::HTTP.get_response(uri)
-hosts = JSON.parse(response.body)
-
-Resource.new('lucosjs', 'js', '../core/lucos.js')
+hosts = {"auth" => "auth.l42.eu", "contacts" => "contacts.l42.eu","googlecontactsync" => "googlecontactsync.l42.eu"}
 
 server = TCPServer.open(port)
 puts 'server running on port '+port
@@ -50,8 +42,6 @@ loop {
 		end
 		begin
 			case path[1]
-				when 'resources'
-					Resource.output(client, uri_params)
 				when 'preload'	
 					begin
 						file = File.new('../../core/preload.xhtml')
@@ -71,7 +61,7 @@ loop {
 					if token.nil? or token == ''
 						raise "Auth Failure"
 					end
-					uri = URI.parse('http://'+hosts['auth']+'/data?token='+URI.escape(token)+'&apikey='+settings['authkey'])
+					uri = URI.parse('https://'+hosts['auth']+'/data?token='+URI.escape(token)+'&apikey='+settings['authkey'])
 					#uri.query = URI.encode_www_form("token" => uri_params['token'], "apikey" => 'abc') #not suported until ruby 1.9
 					response = Net::HTTP.get_response(uri)
 					if (response.code == "401")
@@ -197,7 +187,7 @@ loop {
 			if e.message == "Auth Failure"
 				url = "http://"+hosts['googlecontactsync']+uristr
 				client.puts("HTTP/1.1 302 Found")
-				client.puts("Location: http://"+hosts['auth']+"/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
+				client.puts("Location: https://"+hosts['auth']+"/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
 				client.puts("")
 			elsif e.message.end_with?("Not Found")
 					client.puts("HTTP/1.1 404 "+e.message)
