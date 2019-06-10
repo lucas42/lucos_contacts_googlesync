@@ -6,6 +6,7 @@ require 'rexml/document'
 require 'uri'
 require 'cgi'
 require 'json'
+require 'time'
 include REXML
 
 
@@ -23,14 +24,22 @@ server = TCPServer.open(port)
 puts 'server running on port '+port
 loop {
 	Thread.start(server.accept) do |client|
+		_, _, _, remote_ip = client.peeraddr
+		request_time = Time.now.utc.iso8601
+		status = "?"
 		header = nil
 		while line = client.gets
 			if header.nil?
-				header = line
+				header = line.strip
 			end
 			if line == "\r\n"
 				break
 			end
+		end
+		if header.nil?
+			puts "Incomplete HTTP request, closing connection to "+remote_ip
+			client.close
+			next
 		end
 		uristr = header.split(' ')[1]
 		uri = URI(uristr)
@@ -48,6 +57,7 @@ loop {
 					rescue Exception => e
 						raise "Preload File Not Found"
 					end
+					status = 200
 					client.puts("HTTP/1.1 200 OK")
 					client.puts("Content-Type: application/xhtml+xml")
 					client.puts()				
@@ -78,7 +88,7 @@ loop {
 					
 					case path[2]
 						when nil
-							
+							status = 200
 							client.puts("HTTP/1.1 200 OK")
 							client.puts("Content-Type: text/html; Charset=UTF-8")
 							client.puts("")
@@ -99,7 +109,7 @@ loop {
 							end
 							
 							data = Document.new(resp.body)
-						
+							status = 200
 							client.puts("HTTP/1.1 200 OK")
 							client.puts("Content-Type: text/plain; Charset=UTF-8")
 							client.puts("")
@@ -173,6 +183,7 @@ loop {
 								end
 							}
 						when "export"
+							status = 200
 							client.puts("HTTP/1.1 200 OK")
 							client.puts("Content-Type: text/plain; Charset=UTF-8")
 							client.puts("")
@@ -186,21 +197,24 @@ loop {
 		rescue Exception => e
 			if e.message == "Auth Failure"
 				url = "http://"+hosts['googlecontactsync']+uristr
+				status = 302
 				client.puts("HTTP/1.1 302 Found")
 				client.puts("Location: https://"+hosts['auth']+"/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
 				client.puts("")
 			elsif e.message.end_with?("Not Found")
-					client.puts("HTTP/1.1 404 "+e.message)
-					client.puts
-					client.puts(e.message)
+				status = 404
+				client.puts("HTTP/1.1 404 "+e.message)
+				client.puts
+				client.puts(e.message)
 			else
-					client.puts("HTTP/1.1 500 Internal Error")
-					client.puts
-					client.puts(e.message)
-					client.puts(e.backtrace)
-			
+				status = 500
+				client.puts("HTTP/1.1 500 Internal Error")
+				client.puts
+				client.puts(e.message)
+				client.puts(e.backtrace)
 			end
 		end
+		puts remote_ip+" - - \""+header+"\" ["+request_time+"] "+status.to_s+" -"
 		client.close
 	end
 }
