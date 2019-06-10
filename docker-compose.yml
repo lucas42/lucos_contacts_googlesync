@@ -5,6 +5,10 @@ services:
     container_name: contacts_googlesync
     ports: 
       - "8011:8080"
+    environment:
+      - AUTHKEY
+      - CONTACTSKEY
+      - SYNCGROUP
     image: lucas42/lucos_contacts_googlesync
     extra_hosts:
       - "contacts.l42.eu:10.0.0.8"

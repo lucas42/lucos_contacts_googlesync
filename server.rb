@@ -14,14 +14,14 @@ $stdout.sync = true
 $stderr.sync = true
 Thread.abort_on_exception = true
 
-port = ARGV[0]
-
-settings = Hash[*File.read('settings').split(/\s+/)]
+ENV['AUTHKEY'] || raise('Missing Environment Variable: AUTHKEY')
+ENV['CONTACTSKEY'] || raise('Missing Environment Variable: CONTACTSKEY')
+ENV['SYNCGROUP'] || raise('Missing Environment Variable: SYNCGROUP')
 
 hosts = {"auth" => "auth.l42.eu", "contacts" => "contacts.l42.eu","googlecontactsync" => "googlecontactsync.l42.eu"}
 
-server = TCPServer.open(port)
-puts 'server running on port '+port
+server = TCPServer.open(ENV['PORT'])
+puts 'server running on port '+ENV['PORT']
 loop {
 	Thread.start(server.accept) do |client|
 		_, _, _, remote_ip = client.peeraddr
@@ -71,7 +71,7 @@ loop {
 					if token.nil? or token == ''
 						raise "Auth Failure"
 					end
-					uri = URI.parse('https://'+hosts['auth']+'/data?token='+URI.escape(token)+'&apikey='+settings['authkey'])
+					uri = URI.parse('https://'+hosts['auth']+'/data?token='+URI.escape(token)+'&apikey='+ENV['AUTHKEY'])
 					#uri.query = URI.encode_www_form("token" => uri_params['token'], "apikey" => 'abc') #not suported until ruby 1.9
 					response = Net::HTTP.get_response(uri)
 					if (response.code == "401")
@@ -84,7 +84,7 @@ loop {
 				
 					access_token = authdata['token']
 					
-					lucos_sync_group = settings['syncgroup']
+					lucos_sync_group = ENV['SYNCGROUP']
 					
 					case path[2]
 						when nil
@@ -157,7 +157,7 @@ loop {
 									uri = URI.parse("http://"+hosts['contacts']+"/agents/add")
 
 									http = Net::HTTP.new(uri.host, uri.port)
-									resp = http.post(uri.request_uri, URI.escape("name_en")+"="+URI.escape(contactData.elements['title'].text), {'Authorization' => "Key "+settings['contactskey']})
+									resp = http.post(uri.request_uri, URI.escape("name_en")+"="+URI.escape(contactData.elements['title'].text), {'Authorization' => "Key "+ENV['CONTACTSKEY']})
 
 									if resp.code == "302"
 										userid = resp['Location'].split('/').last
@@ -177,7 +177,7 @@ loop {
 								client.puts("http://"+hosts['contacts']+"/agents/"+userid+"/accounts")
 								client.puts(postdata)
 								http = Net::HTTP.new(uri.host, uri.port)
-								resp = http.post(uri.request_uri, postdata, {'Authorization' => "Key "+settings['contactskey']})
+								resp = http.post(uri.request_uri, postdata, {'Authorization' => "Key "+ENV['CONTACTSKEY']})
 								if resp.code != "204"
 									raise "Accounts HTTP Request failed with "+resp.code+"\n"+resp.body
 								end

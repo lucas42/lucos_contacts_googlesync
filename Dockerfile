@@ -4,4 +4,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-CMD ["ruby", "server.rb", "8080", "services.l42.eu"]
+ENV PORT 8080
+EXPOSE $PORT
+
+CMD ["ruby", "server.rb"]
