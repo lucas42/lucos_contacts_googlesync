@@ -18,7 +18,7 @@ ENV['AUTHKEY'] || raise('Missing Environment Variable: AUTHKEY')
 ENV['CONTACTSKEY'] || raise('Missing Environment Variable: CONTACTSKEY')
 ENV['SYNCGROUP'] || raise('Missing Environment Variable: SYNCGROUP')
 
-hosts = {"auth" => "auth.l42.eu", "contacts" => "contacts.l42.eu","googlecontactsync" => "googlecontactsync.l42.eu"}
+hosts = {"auth" => "auth.l42.eu", "contacts" => "contacts.l42.eu"}
 
 server = TCPServer.open(ENV['PORT'])
 puts 'server running on port '+ENV['PORT']
@@ -28,9 +28,17 @@ loop {
 		request_time = Time.now.utc.iso8601
 		status = "?"
 		header = nil
+		host = nil
+		protocol = "http"
 		while line = client.gets
 			if header.nil?
 				header = line.strip
+			end
+			if line.start_with?("Host: ")
+				host = line.split(': ')[1].strip
+			end
+			if line.start_with?("X-Forwarded-Proto: ")
+				protocol = line.split(': ')[1].strip
 			end
 			if line == "\r\n"
 				break
@@ -196,7 +204,7 @@ loop {
 			end
 		rescue Exception => e
 			if e.message == "Auth Failure"
-				url = "http://"+hosts['googlecontactsync']+uristr
+				url = protocol+"://"+host+uristr
 				status = 302
 				client.puts("HTTP/1.1 302 Found")
 				client.puts("Location: https://"+hosts['auth']+"/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
