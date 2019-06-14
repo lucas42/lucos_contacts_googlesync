@@ -18,7 +18,7 @@ ENV['AUTHKEY'] || raise('Missing Environment Variable: AUTHKEY')
 ENV['CONTACTSKEY'] || raise('Missing Environment Variable: CONTACTSKEY')
 ENV['SYNCGROUP'] || raise('Missing Environment Variable: SYNCGROUP')
 
-hosts = {"auth" => "auth.l42.eu", "contacts" => "contacts.l42.eu"}
+hosts = {"auth" => "auth.l42.eu", "contacts" => "host.docker.internal:8013"}
 
 server = TCPServer.open(ENV['PORT'])
 puts 'server running on port '+ENV['PORT']
