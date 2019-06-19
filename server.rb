@@ -166,7 +166,7 @@ loop {
 									if resp.code == "302"
 										userid = resp['Location'].split('/').last
 									else
-										raise "Add HTTP Request failed with "+resp.code
+										raise "Add HTTP Request failed with "+resp.code+"\nBody: "+resp.body
 									end
 								end
 								client.puts("Updating user "+contactData.elements['title'].text+" (lucOS id: "+userid+")")
