@@ -9,6 +9,8 @@ services:
       - AUTHKEY
       - CONTACTSKEY
       - SYNCGROUP
+      - AUTHURL
+      - CONTACTSURL
     image: lucas42/lucos_contacts_googlesync
     extra_hosts:
       - "contacts.l42.eu:10.0.0.8"

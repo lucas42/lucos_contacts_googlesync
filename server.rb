@@ -17,8 +17,8 @@ Thread.abort_on_exception = true
 ENV['AUTHKEY'] || raise('Missing Environment Variable: AUTHKEY')
 ENV['CONTACTSKEY'] || raise('Missing Environment Variable: CONTACTSKEY')
 ENV['SYNCGROUP'] || raise('Missing Environment Variable: SYNCGROUP')
-
-hosts = {"auth" => "auth.l42.eu", "contacts" => "contacts.l42.eu"}
+ENV['AUTHURL'] || raise('Missing Environment Variable: AUTHURL')
+ENV['CONTACTSURL'] || raise('Missing Environment Variable: CONTACTSURL')
 
 server = TCPServer.open(ENV['PORT'])
 puts 'server running on port '+ENV['PORT']
@@ -79,7 +79,7 @@ loop {
 					if token.nil? or token == ''
 						raise "Auth Failure"
 					end
-					uri = URI.parse('https://'+hosts['auth']+'/data')
+					uri = URI.parse(ENV['AUTHURL']+'/data')
 					uri.query = URI.encode_www_form("token" => token, "apikey" => ENV['AUTHKEY'])
 					response = Net::HTTP.get_response(uri)
 					if (response.code == "401")
@@ -141,7 +141,7 @@ loop {
 								}
 								userid = nil
 								identifiers.each() { |identifier|
-									uri = URI.parse("https://"+hosts['contacts']+"/identify")
+									uri = URI.parse(ENV['CONTACTSURL']+"/identify")
 									uri.query = URI.encode_www_form(identifier)
 									resp = Net::HTTP.get_response(uri)
 									if resp.code == "302"
@@ -157,7 +157,7 @@ loop {
 								# If no userid is found, then add a new user
 								if userid.nil?
 									client.puts("Creating new user "+contactData.elements['title'].text+" (Google id:"+identifiers.first[:contactid]+")")
-									uri = URI.parse("https://"+hosts['contacts']+"/agents/add")
+									uri = URI.parse(ENV['CONTACTSURL']+"/agents/add")
 
 									http = Net::HTTP.new(uri.host, uri.port, :use_ssl => uri.scheme == 'https')
 									resp = http.post(uri.request_uri, URI.escape("name_en")+"="+URI.escape(contactData.elements['title'].text), {'Authorization' => "Key "+ENV['CONTACTSKEY']})
@@ -169,9 +169,9 @@ loop {
 									end
 								end
 								client.puts("Updating user "+contactData.elements['title'].text+" (lucOS id: "+userid+")")
-								uri = URI.parse("https://"+hosts['contacts']+"/agents/"+userid+"/accounts")
+								uri = URI.parse(ENV['CONTACTSURL']+"/agents/"+userid+"/accounts")
 
-								client.puts("https://"+hosts['contacts']+"/agents/"+userid+"/accounts")
+								client.puts(ENV['CONTACTSURL']+"/agents/"+userid+"/accounts")
 								client.puts(identifiers.to_json)
 								http = Net::HTTP.new(uri.host, uri.port, :use_ssl => uri.scheme == 'https')
 								resp = http.post(uri.request_uri, identifiers.to_json, {'Authorization' => "Key "+ENV['CONTACTSKEY']})
@@ -196,7 +196,7 @@ loop {
 				url = protocol+"://"+host+uristr
 				status = 302
 				client.puts("HTTP/1.1 302 Found")
-				client.puts("Location: https://"+hosts['auth']+"/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
+				client.puts("Location: "+ENV['AUTHURL']+"/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
 				client.puts("")
 			elsif e.message.end_with?("Not Found")
 				status = 404
