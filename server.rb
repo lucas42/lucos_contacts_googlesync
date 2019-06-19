@@ -79,8 +79,8 @@ loop {
 					if token.nil? or token == ''
 						raise "Auth Failure"
 					end
-					uri = URI.parse('https://'+hosts['auth']+'/data?token='+URI.escape(token)+'&apikey='+ENV['AUTHKEY'])
-					#uri.query = URI.encode_www_form("token" => uri_params['token'], "apikey" => 'abc') #not suported until ruby 1.9
+					uri = URI.parse('https://'+hosts['auth']+'/data')
+					uri.query = URI.encode_www_form("token" => token, "apikey" => ENV['AUTHKEY'])
 					response = Net::HTTP.get_response(uri)
 					if (response.code == "401")
 						raise "Auth Failure"
@@ -143,11 +143,7 @@ loop {
 								userid = nil
 								identifiers.each() { |identifier|
 									uri = URI.parse("http://"+hosts['contacts']+"/identify")
-									#uri.query = URI.encode_www_form(identifier) #not suported until ruby 1.9
-									uri.query = ""
-									identifier.each_pair do |key, val|
-										uri.query += URI.escape(key.id2name)+"="+URI.escape(val.to_s)+"&"
-									end
+									uri.query = URI.encode_www_form(identifier)
 									resp = Net::HTTP.get_response(uri)
 									if resp.code == "302"
 										userid = resp['Location'].split('/').last
