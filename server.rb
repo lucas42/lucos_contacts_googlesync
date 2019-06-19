@@ -125,19 +125,19 @@ loop {
 							data.elements.each("feed/entry") { |contactData|
 								identifiers = []
 								identifiers << {
-									:type => 16,
-									:id => contactData.elements['id'].text.split('/').last
+									:type => 'googlecontact',
+									:contactid => contactData.elements['id'].text.split('/').last
 								}
 								contactData.elements.each('gd:phoneNumber') { |phone|
 									identifiers << {
-										:type => 5,
-										:id => phone.text.gsub('+44', '0')
+										:type => 'phone',
+										:number => phone.text.gsub('+44', '0')
 									}
 								}
 								contactData.elements.each('gd:email') { |email|
 									identifiers << {
-										:type => 9,
-										:id => email.attributes['address']
+										:type => 'email',
+										:address => email.attributes['address']
 									}
 								}
 								userid = nil
@@ -161,7 +161,7 @@ loop {
 								
 								# If no userid is found, then add a new user
 								if userid.nil?
-									client.puts("Creating new user "+contactData.elements['title'].text+" (Google id:"+identifiers.first[:id]+")")
+									client.puts("Creating new user "+contactData.elements['title'].text+" (Google id:"+identifiers.first[:contactid]+")")
 									uri = URI.parse("http://"+hosts['contacts']+"/agents/add")
 
 									http = Net::HTTP.new(uri.host, uri.port)
@@ -174,18 +174,12 @@ loop {
 									end
 								end
 								client.puts("Updating user "+contactData.elements['title'].text+" (lucOS id: "+userid+")")
-								postdata = ""
-								identifiers.each() { |identifier|
-									identifier.each_pair do |key, val|
-										postdata += URI.escape(key.id2name)+"="+URI.escape(val.to_s)+"&"
-									end
-								}
 								uri = URI.parse("http://"+hosts['contacts']+"/agents/"+userid+"/accounts")
 
 								client.puts("http://"+hosts['contacts']+"/agents/"+userid+"/accounts")
-								client.puts(postdata)
+								client.puts(identifiers.to_json)
 								http = Net::HTTP.new(uri.host, uri.port)
-								resp = http.post(uri.request_uri, postdata, {'Authorization' => "Key "+ENV['CONTACTSKEY']})
+								resp = http.post(uri.request_uri, identifiers.to_json, {'Authorization' => "Key "+ENV['CONTACTSKEY']})
 								if resp.code != "204"
 									raise "Accounts HTTP Request failed with "+resp.code+"\n"+resp.body
 								end
