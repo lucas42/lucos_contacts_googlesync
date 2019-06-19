@@ -104,8 +104,7 @@ loop {
 						when "import"
 							uri = URI.parse("https://www.google.com/m8/feeds/contacts/default/full?group="+URI.escape(lucos_sync_group)+"&max-results=10000")
 
-							http = Net::HTTP.new(uri.host, uri.port)
-							http.use_ssl = true
+							http = Net::HTTP.new(uri.host, uri.port, :use_ssl => uri.scheme == 'https')
 							http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 							resp = http.get(uri.request_uri, {'Authorization' => "OAuth "+access_token})
 							
@@ -160,7 +159,7 @@ loop {
 									client.puts("Creating new user "+contactData.elements['title'].text+" (Google id:"+identifiers.first[:contactid]+")")
 									uri = URI.parse("https://"+hosts['contacts']+"/agents/add")
 
-									http = Net::HTTP.new(uri.host, uri.port)
+									http = Net::HTTP.new(uri.host, uri.port, :use_ssl => uri.scheme == 'https')
 									resp = http.post(uri.request_uri, URI.escape("name_en")+"="+URI.escape(contactData.elements['title'].text), {'Authorization' => "Key "+ENV['CONTACTSKEY']})
 
 									if resp.code == "302"
@@ -174,7 +173,7 @@ loop {
 
 								client.puts("https://"+hosts['contacts']+"/agents/"+userid+"/accounts")
 								client.puts(identifiers.to_json)
-								http = Net::HTTP.new(uri.host, uri.port)
+								http = Net::HTTP.new(uri.host, uri.port, :use_ssl => uri.scheme == 'https')
 								resp = http.post(uri.request_uri, identifiers.to_json, {'Authorization' => "Key "+ENV['CONTACTSKEY']})
 								if resp.code != "204"
 									raise "Accounts HTTP Request failed with "+resp.code+"\n"+resp.body
