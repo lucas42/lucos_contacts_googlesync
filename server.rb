@@ -18,7 +18,7 @@ ENV['AUTHKEY'] || raise('Missing Environment Variable: AUTHKEY')
 ENV['CONTACTSKEY'] || raise('Missing Environment Variable: CONTACTSKEY')
 ENV['SYNCGROUP'] || raise('Missing Environment Variable: SYNCGROUP')
 
-hosts = {"auth" => "auth.l42.eu", "contacts" => "host.docker.internal:8013"}
+hosts = {"auth" => "auth.l42.eu", "contacts" => "contacts.l42.eu"}
 
 server = TCPServer.open(ENV['PORT'])
 puts 'server running on port '+ENV['PORT']
@@ -142,7 +142,7 @@ loop {
 								}
 								userid = nil
 								identifiers.each() { |identifier|
-									uri = URI.parse("http://"+hosts['contacts']+"/identify")
+									uri = URI.parse("https://"+hosts['contacts']+"/identify")
 									uri.query = URI.encode_www_form(identifier)
 									resp = Net::HTTP.get_response(uri)
 									if resp.code == "302"
@@ -158,7 +158,7 @@ loop {
 								# If no userid is found, then add a new user
 								if userid.nil?
 									client.puts("Creating new user "+contactData.elements['title'].text+" (Google id:"+identifiers.first[:contactid]+")")
-									uri = URI.parse("http://"+hosts['contacts']+"/agents/add")
+									uri = URI.parse("https://"+hosts['contacts']+"/agents/add")
 
 									http = Net::HTTP.new(uri.host, uri.port)
 									resp = http.post(uri.request_uri, URI.escape("name_en")+"="+URI.escape(contactData.elements['title'].text), {'Authorization' => "Key "+ENV['CONTACTSKEY']})
@@ -170,9 +170,9 @@ loop {
 									end
 								end
 								client.puts("Updating user "+contactData.elements['title'].text+" (lucOS id: "+userid+")")
-								uri = URI.parse("http://"+hosts['contacts']+"/agents/"+userid+"/accounts")
+								uri = URI.parse("https://"+hosts['contacts']+"/agents/"+userid+"/accounts")
 
-								client.puts("http://"+hosts['contacts']+"/agents/"+userid+"/accounts")
+								client.puts("https://"+hosts['contacts']+"/agents/"+userid+"/accounts")
 								client.puts(identifiers.to_json)
 								http = Net::HTTP.new(uri.host, uri.port)
 								resp = http.post(uri.request_uri, identifiers.to_json, {'Authorization' => "Key "+ENV['CONTACTSKEY']})
