@@ -189,6 +189,17 @@ loop {
 						else
 							raise "File Not Found"
 					end
+				when "_info"
+					status = 200
+					info = {
+						system: "lucos_contacts_googlesync",
+						checks: {},
+						metrics: {},
+					}
+					client.puts("HTTP/1.1 200 OK")
+					client.puts("Content-Type: application/json; Charset=UTF-8")
+					client.puts("")
+					client.puts(info.to_json)
 				else
 					raise "File Not Found"
 			end
