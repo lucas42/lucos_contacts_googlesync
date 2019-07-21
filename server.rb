@@ -195,6 +195,9 @@ loop {
 						system: "lucos_contacts_googlesync",
 						checks: {},
 						metrics: {},
+						ci: {
+							circle: "gh/lucas42/lucos_contacts_googlesync",
+						}
 					}
 					client.puts("HTTP/1.1 200 OK")
 					client.puts("Content-Type: application/json; Charset=UTF-8")
