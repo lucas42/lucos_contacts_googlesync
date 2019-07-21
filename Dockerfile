@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-ENV PORT 8080
+ENV PORT 8011
 EXPOSE $PORT
 
 CMD ["ruby", "server.rb"]

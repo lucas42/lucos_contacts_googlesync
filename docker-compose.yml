@@ -4,7 +4,7 @@ services:
     build: .
     container_name: contacts_googlesync
     ports: 
-      - "8011:8080"
+      - "8011:8011"
     environment:
       - AUTHKEY
       - CONTACTSKEY
