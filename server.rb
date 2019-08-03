@@ -30,34 +30,35 @@ loop {
 		header = nil
 		host = nil
 		protocol = "http"
-		while line = client.gets
-			if header.nil?
-				header = line.strip
-			end
-			if line.start_with?("Host: ")
-				host = line.split(': ')[1].strip
-			end
-			if line.start_with?("X-Forwarded-Proto: ")
-				protocol = line.split(': ')[1].strip
-			end
-			if line == "\r\n"
-				break
-			end
-		end
-		if header.nil?
-			puts "Incomplete HTTP request, closing connection to "+remote_ip
-			client.close
-			next
-		end
-		uristr = header.split(' ')[1]
-		uri = URI(uristr)
-		path = uri.path.gsub('..','').split('/')
-		if uri.query.nil?
-			uri_params = {}
-		else
-			uri_params = CGI.parse(uri.query)
-		end
+		uristr = "/"
 		begin
+			while line = client.gets
+				if header.nil?
+					header = line.strip
+				end
+				if line.start_with?("Host: ")
+					host = line.split(': ')[1].strip
+				end
+				if line.start_with?("X-Forwarded-Proto: ")
+					protocol = line.split(': ')[1].strip
+				end
+				if line == "\r\n"
+					break
+				end
+			end
+			if header.nil?
+				puts "Incomplete HTTP request, closing connection to "+remote_ip
+				client.close
+				next
+			end
+			uristr = header.split(' ')[1]
+			uri = URI(uristr)
+			path = uri.path.gsub('..','').split('/')
+			if uri.query.nil?
+				uri_params = {}
+			else
+				uri_params = CGI.parse(uri.query)
+			end
 			case path[1]
 				when 'preload'	
 					begin
