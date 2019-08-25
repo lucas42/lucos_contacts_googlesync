@@ -24,14 +24,15 @@ server = TCPServer.open(ENV['PORT'])
 puts 'server running on port '+ENV['PORT']
 loop {
 	Thread.start(server.accept) do |client|
-		_, _, _, remote_ip = client.peeraddr
 		request_time = Time.now.utc.iso8601
 		status = "?"
 		header = nil
 		host = nil
 		protocol = "http"
 		uristr = "/"
+		remote_ip = "unknown_client"
 		begin
+			_, _, _, remote_ip = client.peeraddr
 			while line = client.gets
 				if header.nil?
 					header = line.strip
