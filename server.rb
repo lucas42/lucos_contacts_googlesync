@@ -209,23 +209,31 @@ loop {
 					raise "File Not Found"
 			end
 		rescue Exception => e
-			if e.message == "Auth Failure"
-				url = protocol+"://"+host+uristr
-				status = 302
-				client.puts("HTTP/1.1 302 Found")
-				client.puts("Location: "+ENV['AUTHURL']+"/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
-				client.puts("")
-			elsif e.message.end_with?("Not Found")
-				status = 404
-				client.puts("HTTP/1.1 404 "+e.message)
-				client.puts
-				client.puts(e.message)
-			else
-				status = 500
-				client.puts("HTTP/1.1 500 Internal Error")
-				client.puts
-				client.puts(e.message)
-				client.puts(e.backtrace)
+			begin
+				if e.message == "Auth Failure"
+					url = protocol+"://"+host+uristr
+					status = 302
+					client.puts("HTTP/1.1 302 Found")
+					client.puts("Location: "+ENV['AUTHURL']+"/provider?type=google&redirect_uri="+URI.escape(url)+"&scope="+URI.escape("https://www.google.com/m8/feeds/"))
+					client.puts("")
+				elsif e.message.end_with?("Not Found")
+					status = 404
+					client.puts("HTTP/1.1 404 "+e.message)
+					client.puts
+					client.puts(e.message)
+				else
+					status = 500
+					client.puts("HTTP/1.1 500 Internal Error")
+					client.puts
+					client.puts(e.message)
+					client.puts(e.backtrace)
+				end
+			rescue Exception => resuceException
+				puts "Failed to send error page to client"
+				puts e.message
+				puts e.backtrace
+				puts resuceException.message
+				puts resuceException.backtrace
 			end
 		end
 		puts remote_ip+" - - \""+header+"\" ["+request_time+"] "+status.to_s+" -"
