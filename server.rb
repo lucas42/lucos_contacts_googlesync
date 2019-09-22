@@ -209,6 +209,13 @@ loop {
 					raise "File Not Found"
 			end
 		rescue Exception => e
+			if header.nil?
+				puts "Exception occurred before HTTP request was completed "+remote_ip
+				puts e.message
+				puts e.backtrace
+				client.close
+				next
+			end
 			begin
 				if e.message == "Auth Failure"
 					url = protocol+"://"+host+uristr
