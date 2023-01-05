@@ -12,3 +12,6 @@ The environment variables used are:
 
 ## Building
 The build is configured to run in Dockerhub when a commit is pushed to the master branch in github.
+
+## Supersceded
+This project has been supersceded by [lucos_contacts_googlesync_import](https://github.com/lucas42/lucos_contacts_googlesync_import) which runs periodically on a cron, rather than needing to be refreshed.
